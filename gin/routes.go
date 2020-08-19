@@ -14,5 +14,7 @@ func registerTestRoutes() {
 }
 
 func registerContactsRoutes() {
-	//contactRoute := router.Group("/contacts")
+	contactRoutes := router.Group("/contacts")
+
+	contactRoutes.POST("/me", routes.SendMeMessage)
 }

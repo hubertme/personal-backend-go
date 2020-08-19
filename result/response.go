@@ -1,9 +1,9 @@
 package result
 
 type Response struct {
-	ErrorCode int `json:"error_code"`
-	Message string `json:"message"`
-	Data interface{} `json:"data"`
+	ErrorCode int         `json:"error_code"`
+	Message   string      `json:"message"`
+	Data      interface{} `json:"data"`
 }
 
 func Success(data interface{}) Response {
@@ -18,6 +18,22 @@ func DevError(data interface{}) Response {
 	return Response{
 		ErrorCode: DEV_REPORT_ERROR,
 		Message:   "",
+		Data:      data,
+	}
+}
+
+func FormatError(data interface{}) Response {
+	return Response{
+		ErrorCode: BAD_FORMATTED_REQUEST,
+		Message:   "Bad formatted request sent",
+		Data:      data,
+	}
+}
+
+func EmptyError(data interface{}) Response {
+	return Response{
+		ErrorCode: EMPTY_FIELD_REQUEST,
+		Message:   "Empty request field detected",
 		Data:      data,
 	}
 }
