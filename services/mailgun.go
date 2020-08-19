@@ -20,6 +20,7 @@ func MailgunSetup() {
 
 func MailgunSendMessage(sender string, receiver string, subject string, content string) (string, string, error) {
 	message := mg.NewMessage(sender, subject, content, receiver)
+	message.SetHtml(content)
 
 	// Define background context
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)

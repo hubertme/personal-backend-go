@@ -3,7 +3,9 @@ package routes
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
+	"wang.hihubert.personal-backend/contents"
 	"wang.hihubert.personal-backend/models"
 	"wang.hihubert.personal-backend/result"
 	"wang.hihubert.personal-backend/services"
@@ -21,9 +23,16 @@ func SendMeMessage(c *gin.Context) {
 		return
 	}
 
-	emailTitle := fmt.Sprintf("A Message from %v <%v>", message.SenderName, message.SenderEmail)
+	// Send email to sender
 	sender := fmt.Sprintf("%v <%v>", message.SenderName, message.SenderEmail)
-	res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, emailTitle, message.Content)
+	confirmEmail := contents.EmailReceivedConfirmation(message.SenderName, message.Subject, message.Content)
+	_, _, mgSendErr := services.MailgunSendMessage(services.DefaultSender, sender, "Thank You for Reaching Out!", confirmEmail)
+	if mgSendErr != nil {
+		log.Println("Error sending to sender:", mgSendErr.Error())
+	}
+
+	// Send email to me
+	res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, message.Subject, message.Content)
 	if mgErr != nil {
 		c.JSON(http.StatusInternalServerError, result.DevError(mgErr.Error()))
 		return
