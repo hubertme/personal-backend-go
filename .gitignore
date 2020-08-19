@@ -5,3 +5,4 @@
 *.pb.gw.go
 /vendor/
 .DS_STORE
+.env

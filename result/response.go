@@ -17,7 +17,7 @@ func Success(data interface{}) Response {
 func DevError(data interface{}) Response {
 	return Response{
 		ErrorCode: DEV_REPORT_ERROR,
-		Message:   "",
+		Message:   "Please contact developer to report this error",
 		Data:      data,
 	}
 }

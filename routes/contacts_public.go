@@ -1,10 +1,12 @@
 package routes
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"wang.hihubert.personal-backend/models"
 	"wang.hihubert.personal-backend/result"
+	"wang.hihubert.personal-backend/services"
 )
 
 func SendMeMessage(c *gin.Context) {
@@ -19,5 +21,17 @@ func SendMeMessage(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusAccepted, result.Success(message))
+	emailTitle := fmt.Sprintf("A Message from %v <%v>", message.SenderName, message.SenderEmail)
+	sender := fmt.Sprintf("%v <%v>", message.SenderName, message.SenderEmail)
+	res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, emailTitle, message.Content)
+	if mgErr != nil {
+		c.JSON(http.StatusInternalServerError, result.DevError(mgErr.Error()))
+		return
+	}
+
+	dataRes := map[string]interface{}{
+		"mg_id":  id,
+		"mg_msg": res,
+	}
+	c.JSON(http.StatusAccepted, result.Success(dataRes))
 }
