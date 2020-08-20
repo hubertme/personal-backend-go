@@ -23,13 +23,17 @@ func SendMeMessage(c *gin.Context) {
 		return
 	}
 
-	// Send email to sender
 	sender := fmt.Sprintf("%v <%v>", message.SenderName, message.SenderEmail)
-	confirmEmail := contents.EmailReceivedConfirmation(message.SenderName, message.Subject, message.Content)
-	_, _, mgSendErr := services.MailgunSendMessage(services.DefaultSender, sender, "Thank You for Reaching Out!", confirmEmail)
-	if mgSendErr != nil {
-		log.Println("Error sending to sender:", mgSendErr.Error())
-	}
+
+	// Send email to sender
+	// Async, no need to wait
+	go func(senderName string, subject string, content string) {
+		confirmEmail := contents.EmailReceivedConfirmation(senderName, subject, content)
+		_, _, mgSendErr := services.MailgunSendMessage(services.DefaultSender, sender, "Thank You for Reaching Out!", confirmEmail)
+		if mgSendErr != nil {
+			log.Println("Error sending to sender:", mgSendErr.Error())
+		}
+	}(message.SenderName, message.Subject, message.Content)
 
 	// Send email to me
 	res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, message.Subject, message.Content)
