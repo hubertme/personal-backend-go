@@ -10,7 +10,7 @@ import (
 var mg *mailgun.MailgunImpl
 
 const DefaultSender = "Hubert Wang <no-reply@postman.hihubert.wang>"
-const DefaultReceiver = "Hubert Wang <pingme@hihubert.wang>"
+const DefaultReceiver = "Hubert Wang <askme@hihubert.wang>"
 
 func MailgunSetup() {
 	domainName := "postmaster.hihubert.wang"
