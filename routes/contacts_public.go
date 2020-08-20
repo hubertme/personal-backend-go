@@ -5,7 +5,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+
 	"wang.hihubert.personal-backend/contents"
+	"wang.hihubert.personal-backend/database"
 	"wang.hihubert.personal-backend/models"
 	"wang.hihubert.personal-backend/result"
 	"wang.hihubert.personal-backend/services"
@@ -29,22 +31,42 @@ func SendMeMessage(c *gin.Context) {
 	// Async, no need to wait
 	go func(senderName string, subject string, content string) {
 		confirmEmail := contents.EmailReceivedConfirmation(senderName, subject, content)
-		_, _, mgSendErr := services.MailgunSendMessage(services.DefaultSender, sender, "Thank You for Reaching Out!", confirmEmail)
+		res, id, mgSendErr := services.MailgunSendMessage(services.DefaultSender, sender, "Thank You for Reaching Out!", confirmEmail)
 		if mgSendErr != nil {
 			log.Println("Error sending to sender:", mgSendErr.Error())
+		} else {
+			log.Println("Success sending to sender:", id, res)
 		}
 	}(message.SenderName, message.Subject, message.Content)
 
 	// Send email to me
-	res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, message.Subject, message.Content)
-	if mgErr != nil {
-		c.JSON(http.StatusInternalServerError, result.DevError(mgErr.Error()))
+	// Async, no need to wait
+	go func(subject string, content string) {
+		res, id, mgErr := services.MailgunSendMessage(sender, services.DefaultReceiver, subject, content)
+		if mgErr != nil {
+			//c.JSON(http.StatusInternalServerError, result.DevError(mgErr.Error()))
+			log.Println("Error sending to my mailbox:", mgErr.Error())
+		} else {
+			log.Println("Success sending to my mailbox:", id, res)
+		}
+	}(message.Subject, message.Content)
+
+	// Save to MySQL
+	state, sqlErr := database.DB.Prepare("INSERT INTO messages (sender_name, sender_email, subject, content) VALUES (?, ?, ?, ?)")
+	if sqlErr != nil {
+		c.JSON(http.StatusInternalServerError, result.DevError(sqlErr.Error()))
 		return
 	}
 
-	dataRes := map[string]interface{}{
-		"mg_id":  id,
-		"mg_msg": res,
+	results, qErr := state.Query(message.SenderName, message.SenderEmail, message.Subject, message.Content)
+	if qErr != nil {
+		c.JSON(http.StatusInternalServerError, result.DevError(sqlErr.Error()))
+		return
 	}
-	c.JSON(http.StatusAccepted, result.Success(dataRes))
+
+	//dataRes := map[string]interface{}{
+	//	"sender_name":  message.SenderName,
+	//	"sender_email": message.SenderEmail,
+	//}
+	c.JSON(http.StatusAccepted, result.Success(results))
 }

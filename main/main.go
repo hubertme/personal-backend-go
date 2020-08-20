@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	"log"
+	"wang.hihubert.personal-backend/database"
 	"wang.hihubert.personal-backend/gin"
 	"wang.hihubert.personal-backend/services"
 )
@@ -20,6 +21,7 @@ func main() {
 
 	// Setup Services
 	services.MailgunSetup()
+	database.InitMySQL()
 
 	// Gin server
 	err := gin.SetupGinServer()
